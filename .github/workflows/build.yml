@@ -1,12 +1,16 @@
-name: Matrix Build with Artifacts
+name: Node.js Matrix Build
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches:
+      - main
+      - develop
   pull_request:
-    branches: [ "main", "develop" ]
+    branches:
+      - main
+      - develop
   schedule:
-    - cron: "0 0 * * 1" # lundi 00:00
+    - cron: "0 0 * * 1" # tous les lundis à minuit
 
 jobs:
   build:
@@ -26,27 +30,38 @@ jobs:
         include:
           - os: windows-latest
             node: 22
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: npm install
-      - run: npm run build
-      - uses: actions/upload-artifact@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run build
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.os }}-node${{ matrix.node }}
           path: dist/
 
   conditional-job:
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
     steps:
-      - name: Télécharger l’artefact Ubuntu+Node18
-        uses: actions/download-artifact@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
           name: build-ubuntu-latest-node18
-          path: ./deploy
-      - name: Déploiement simulé
-        run: echo "Déploiement depuis Ubuntu Node 18"
+          path: dist/
+
+      - name: Simulate deployment
+        run: echo "🚀 Déploiement simulé pour Ubuntu + Node 18"
